@@ -27,7 +27,7 @@ def get_weekday(hourtime):
     return date(year,month,day).weekday()
 
 from pyspark.sql.types import *
-from pyspark.sql.functions import col, udf, pandas_udf, PandasUDFType
+from pyspark.sql.functions import udf, pandas_udf, PandasUDFType
 day_func = udf(get_weekday, IntegerType())
 
 def get_calendar_day(hourtime):
