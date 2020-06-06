@@ -49,7 +49,7 @@ if __name__ == "__main__":
     def average(count, weekday):
         return int(count)/diccionario[str(weekday)]
 
-    average_pwd = udf(average, DoubleType())
+    average_pwd = udf(average, DoubleType()) #Considerar cambiar a división entera para reducir tiempo de ejecución
 
     salidas = salidas.select('idunplug_station', 'weekday', average_pwd('count','weekday'))
     with open('uso_medio_salidas.json','w') as salidasfinal:
