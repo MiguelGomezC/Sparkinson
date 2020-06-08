@@ -1,8 +1,8 @@
 """
-Reúne los resultados obtenidos a partir de frecuencias_habituales.py,
-y genera métricas de frecuencia a partir de estas, que se considerarán
+ReÃºne los resultados obtenidos a partir de frecuencias_habituales.py,
+y genera mÃ©tricas de frecuencia a partir de estas, que se considerarÃ¡n
 representativas del comportamiento habitual de BICIMAD
-por estación y día de la semana.
+por estaciÃ³n y dÃ­a de la semana.
 """
 import os
 import json
@@ -16,10 +16,32 @@ from pyspark.sql.types import *
 from pyspark.sql.functions import udf, pandas_udf, PandasUDFType
 from pyspark.sql.functions import sum as _sum
 
+def mapper(lines):
+  data=json.loads(lines)
+  estacion=data['Número']
+  distrito=data['Distrito']
+  return estacion,distrito
+
+def estacion_distrito(nestacion):
+  estaciones=[]
+  with open('distritos_estaciones.json', 'r') as f:
+    for lines in f:
+     estaciones.append(json.loads(lines))
+  estaciones = estaciones.pop().pop()
+  i = 0
+  estjs=[]
+  while i < len(estaciones):
+    estjs.append(json.dumps(estaciones[i]))
+    i += 1
+  rdd=sc.parallelize(estjs)
+  distrito=rdd.map(mapper).filter(lambda x:x[0]==nestacion).collect()[0][1][4:13]
+  return distrito
+
+
 if __name__ == "__main__":
     
     with open('dataset_frecuencias_habituales/resultados/salidas.json','r') as ficherosalidas:
-        frames = [json.loads(line) for line in ficherosalidas] #Hay tantas líneas como ficheros se analizaron en frecuencias_habituales.py
+        frames = [json.loads(line) for line in ficherosalidas] #Hay tantas lÃ­neas como ficheros se analizaron en frecuencias_habituales.py
     frame = frames.pop()
     for i in frames:
         frame.extend(i)
@@ -39,17 +61,17 @@ if __name__ == "__main__":
         diccionarios = [json.loads(line) for line in ficherodiccionarios]
     diccionario = dict(functools.reduce(operator.add, map(collections.Counter, diccionarios)))
     
-    print('N�mero total de viajes analizados = ', diccionario['viajes totales'], '\n')
+    print('Número total de viajes analizados = ', diccionario['viajes totales'], '\n')
     
-    #Sumar las apariciones de cada par (weekday, estación) distinto
+    #Sumar las apariciones de cada par (weekday, estaciÃ³n) distinto
     salidas = salidas.groupby(['weekday','idunplug_station']).agg(_sum('count')).withColumnRenamed('sum(count)', 'count')
     llegadas = llegadas.groupby(['weekday','idplug_station']).agg(_sum('count')).withColumnRenamed('sum(count)', 'count')
     
-    #Calcular media de la cantidad de viajes por d�a de la semanas
+    #Calcular media de la cantidad de viajes por día de la semanas
     def average(count, weekday):
         return int(count)/diccionario[str(weekday)]
 
-    average_pwd = udf(average, DoubleType()) #Considerar cambiar a divisi�n entera para reducir tiempo de ejecuci�n
+    average_pwd = udf(average, DoubleType()) #Considerar cambiar a división entera para reducir tiempo de ejecución
 
     salidas = salidas.select('idunplug_station', 'weekday', average_pwd('count','weekday'))
     with open('uso_medio_salidas.json','w') as salidasfinal:
