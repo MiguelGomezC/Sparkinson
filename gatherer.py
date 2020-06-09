@@ -16,28 +16,6 @@ from pyspark.sql.types import *
 from pyspark.sql.functions import udf, pandas_udf, PandasUDFType
 from pyspark.sql.functions import sum as _sum
 
-def mapper(lines):
-  data=json.loads(lines)
-  estacion=data['Número']
-  distrito=data['Distrito']
-  return estacion,distrito
-
-def estacion_distrito(nestacion):
-  estaciones=[]
-  with open('distritos_estaciones.json', 'r') as f:
-    for lines in f:
-     estaciones.append(json.loads(lines))
-  estaciones = estaciones.pop().pop()
-  i = 0
-  estjs=[]
-  while i < len(estaciones):
-    estjs.append(json.dumps(estaciones[i]))
-    i += 1
-  rdd=sc.parallelize(estjs)
-  distrito=rdd.map(mapper).filter(lambda x:x[0]==nestacion).collect()[0][1][4:13]
-  return distrito
-
-
 if __name__ == "__main__":
     
     with open('dataset_frecuencias_habituales/resultados/salidas.json','r') as ficherosalidas:
