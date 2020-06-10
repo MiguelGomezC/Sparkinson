@@ -11,8 +11,12 @@ def mapper_zone(line, zone):
     """
     zone(string) = 'Distrito' o 'Barrio', dependiendo de la división que se quiera hacer
     """
+    if zone == 'Barrio':
+        liminf = 6
+    elif zone == 'Distrito':
+        liminf = 4
     estacion=line['Número']
-    distrito=line[zone]
+    distrito=line[zone][liminf:]
     return estacion, distrito
 
 def division(zone, sc):
